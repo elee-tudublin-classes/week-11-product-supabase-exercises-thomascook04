@@ -15,12 +15,9 @@ supabase: Client = create_client(db_url, db_key)
 
 # get all products
 def dataGetProducts():
-    response = (supabase.table("product")
-                .select("*")
-                .order("title", desc=False)
-                .execute()
-    )
-
+    response = supabase.from_("product").select(
+        "id, title, description, stock, price, thumbnail, category(name)"
+    ).execute()
     return response.data
 
 # get product by id
@@ -53,8 +50,11 @@ def dataAddProduct(product: Product) :
         .insert(product.dict()) # convert product object to dict - required by Supabase
         .execute()
     )
-    # result is 1st item in the list
-    return response.data[0]
+    product_id = response.data[0]["id"]
+    product_with_category = supabase.from_("product").select(
+    "id, title, description, stock, price, thumbnail, category!inner(name)"
+    ).eq("id", product_id).execute()
+    return product_with_category.data[0]
 
 # get all categories
 def dataGetCategories():
